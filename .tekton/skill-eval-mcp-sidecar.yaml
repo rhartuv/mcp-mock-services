@@ -1,0 +1,90 @@
+# Example: mcp-mock-services as a Tekton Task sidecar.
+# Eval step and mock share the pod network → MCP_URL=http://127.0.0.1:1080/mcp/<name>
+# Replace mcp-mock-image with the image built from this repository.
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: eval-with-mcp-mock-sidecar
+spec:
+  description: >
+    Run evaluation against mocked MCP servers by colocating mcp-mock-services
+    as a Task sidecar. Sets MCP_URL for the evaluation harness.
+  params:
+    - name: mcp-mock-image
+      type: string
+      description: Container image built from this repository.
+    - name: eval-image
+      type: string
+      description: Image that runs the evaluation harness.
+    - name: mcp-url
+      type: string
+      description: "MCP endpoint (e.g. http://127.0.0.1:1080/mcp/openshift)."
+      default: http://127.0.0.1:1080/mcp/openshift
+  results:
+    - name: eval-status
+      description: Pass/fail summary from the evaluation step.
+  sidecars:
+    - name: mcp-mock
+      image: $(params.mcp-mock-image)
+      env:
+        - name: MOCKSERVER_INITIALIZATION_JSON_PATH
+          value: /config/*.json
+        - name: SERVER_PORT
+          value: "1080"
+      ports:
+        - name: http
+          containerPort: 1080
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        capabilities:
+          drop: ["ALL"]
+      readinessProbe:
+        httpGet:
+          path: /health
+          port: 1080
+        initialDelaySeconds: 2
+        periodSeconds: 3
+        failureThreshold: 20
+  steps:
+    - name: wait-for-mock
+      image: registry.access.redhat.com/ubi9/python-311:latest
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        capabilities:
+          drop: ["ALL"]
+      script: |
+        #!/usr/bin/env python3
+        import sys
+        import time
+        import urllib.error
+        import urllib.request
+
+        url = "http://127.0.0.1:1080/health"
+        for _ in range(40):
+            try:
+                with urllib.request.urlopen(url, timeout=2) as response:
+                    if response.status == 200:
+                        print("MCP mock is ready")
+                        sys.exit(0)
+            except (urllib.error.URLError, TimeoutError, OSError):
+                time.sleep(1)
+        print("Timed out waiting for mcp-mock sidecar", file=sys.stderr)
+        sys.exit(1)
+    - name: evaluate
+      image: $(params.eval-image)
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        capabilities:
+          drop: ["ALL"]
+      env:
+        - name: MCP_URL
+          value: $(params.mcp-url)
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        echo "MCP_URL=${MCP_URL}"
+        # Replace with the evaluation harness entrypoint.
+        echo "passed" | tee "$(results.eval-status.path)"

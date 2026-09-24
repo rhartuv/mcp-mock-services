@@ -1,0 +1,14 @@
+.git
+.gitattributes
+.github
+.tekton
+.venv
+__pycache__
+*.pyc
+*.md
+LICENSE
+schemas
+scripts
+.dockerignore
+.gitignore
+docker-compose.yml

@@ -1,0 +1,12 @@
+services:
+  mcp-mock:
+    build: .
+    image: mcp-mock-services:local
+    ports:
+      - "1080:1080"
+    volumes:
+      - ./expectations:/config:Z
+    environment:
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/*.json
+      MOCKSERVER_WATCH_INITIALIZATION_JSON: "true"
+      SERVER_PORT: "1080"

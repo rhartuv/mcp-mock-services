@@ -1,0 +1,921 @@
+[
+  {
+    "id": "liveness-health",
+    "priority": 100,
+    "httpRequest": {
+      "method": "GET",
+      "path": "/health"
+    },
+    "httpResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Content-Type": [
+          "application/json"
+        ]
+      },
+      "body": {
+        "status": "ok",
+        "service": "mcp-mock-services"
+      }
+    }
+  },
+  {
+    "id": "mcp-openshift-initialize",
+    "priority": 20,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "initialize"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"], \"Mcp-Session-Id\": [\"mcp-openshift-session\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"protocolVersion\": \"2024-11-05\", \"capabilities\": {\"tools\": {\"listChanged\": false}}, \"serverInfo\": {\"name\": \"openshift-mcp-server\", \"version\": \"1.0.0\"}}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-notifications-initialized",
+    "priority": 20,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "notifications/initialized"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponse": {
+      "statusCode": 202
+    }
+  },
+  {
+    "id": "mcp-openshift-ping",
+    "priority": 20,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "ping"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-tools-list",
+    "priority": 20,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/list"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"tools\": [{\"name\": \"configuration_contexts_list\", \"description\": \"List all available context names and associated server urls from the kubeconfig file.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {}, \"required\": []}}, {\"name\": \"configuration_view\", \"description\": \"Get the current Kubernetes configuration content as a kubeconfig YAML.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"minified\": {\"type\": \"boolean\", \"description\": \"Return a minified version keeping only the current-context and relevant config. Default true.\"}}, \"required\": []}}, {\"name\": \"events_list\", \"description\": \"List all the Kubernetes events in the current cluster. Can be filtered by namespace.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"namespace\": {\"type\": \"string\", \"description\": \"Namespace to retrieve events from. If not provided, lists events from all namespaces.\"}}, \"required\": []}}, {\"name\": \"namespaces_list\", \"description\": \"List all the Kubernetes namespaces in the current cluster.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {}, \"required\": []}}, {\"name\": \"nodes_log\", \"description\": \"Get logs from a Kubernetes node (kubelet, kube-proxy, or other system logs).\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"Name of the node to get logs from.\"}, \"query\": {\"type\": \"string\", \"description\": \"Service or file to return logs from (e.g. 'kubelet', '/var/log/kube-proxy.log').\"}, \"tailLines\": {\"type\": \"integer\", \"description\": \"Number of lines from the end of the logs. 0 means all.\", \"default\": 100}}, \"required\": [\"name\", \"query\"]}}, {\"name\": \"nodes_stats_summary\", \"description\": \"Get detailed resource usage statistics from a node via the kubelet Summary API.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"Name of the node to get stats from.\"}}, \"required\": [\"name\"]}}, {\"name\": \"nodes_top\", \"description\": \"List node resource consumption (CPU and memory) from Metrics Server.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"Name of the node. All nodes if not provided.\"}, \"label_selector\": {\"type\": \"string\", \"description\": \"Label selector to filter nodes (e.g. 'node-role.kubernetes.io/worker=').\"}}, \"required\": []}}, {\"name\": \"pods_delete\", \"description\": \"Delete a pod in a specified namespace.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"Name of the pod to delete.\"}, \"namespace\": {\"type\": \"string\", \"description\": \"Namespace to delete the pod from.\"}}, \"required\": [\"name\"]}}, {\"name\": \"pods_exec\", \"description\": \"Execute a command in a pod container.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"Name of the pod.\"}, \"namespace\": {\"type\": \"string\", \"description\": \"Namespace of the pod.\"}, \"command\": {\"type\": \"array\", \"items\": {\"type\": \"string\"}, \"description\": \"Command to execute. First item is the command, rest are arguments.\"}, \"container\": {\"type\": \"string\", \"description\": \"Container name (optional).\"}}, \"required\": [\"name\", \"command\"]}}, {\"name\": \"pods_get\", \"description\": \"Get details of a specific pod.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"Name of the pod.\"}, \"namespace\": {\"type\": \"string\", \"description\": \"Namespace to get the pod from.\"}}, \"required\": [\"name\"]}}, {\"name\": \"pods_list\", \"description\": \"List all pods in the cluster from all namespaces.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"labelSelector\": {\"type\": \"string\", \"description\": \"Label selector to filter pods (e.g. 'app=myapp,env=prod').\"}, \"fieldSelector\": {\"type\": \"string\", \"description\": \"Field selector to filter pods (e.g. 'status.phase=Running').\"}}, \"required\": []}}, {\"name\": \"pods_list_in_namespace\", \"description\": \"List all pods in a specified namespace.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"namespace\": {\"type\": \"string\", \"description\": \"Namespace to list pods from.\"}, \"labelSelector\": {\"type\": \"string\", \"description\": \"Label selector to filter pods.\"}, \"fieldSelector\": {\"type\": \"string\", \"description\": \"Field selector to filter pods.\"}}, \"required\": [\"namespace\"]}}, {\"name\": \"pods_log\", \"description\": \"Get logs from a pod container.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"Name of the pod.\"}, \"namespace\": {\"type\": \"string\", \"description\": \"Namespace of the pod.\"}, \"container\": {\"type\": \"string\", \"description\": \"Container name (optional).\"}, \"tail\": {\"type\": \"integer\", \"description\": \"Number of lines from the end. Default 100.\", \"default\": 100}, \"previous\": {\"type\": \"boolean\", \"description\": \"Return previous terminated container logs.\"}}, \"required\": [\"name\"]}}, {\"name\": \"pods_run\", \"description\": \"Run a new pod with a specified container image.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"image\": {\"type\": \"string\", \"description\": \"Container image to run.\"}, \"name\": {\"type\": \"string\", \"description\": \"Name of the pod (optional, random if not provided).\"}, \"namespace\": {\"type\": \"string\", \"description\": \"Namespace to run the pod in.\"}, \"port\": {\"type\": \"integer\", \"description\": \"TCP/IP port to expose (optional).\"}}, \"required\": [\"image\"]}}, {\"name\": \"pods_top\", \"description\": \"List pod resource consumption (CPU and memory) from Metrics Server.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"name\": {\"type\": \"string\", \"description\": \"Pod name (optional, all pods if not provided).\"}, \"namespace\": {\"type\": \"string\", \"description\": \"Namespace (optional, current namespace if not provided).\"}, \"all_namespaces\": {\"type\": \"boolean\", \"description\": \"List pods from all namespaces. Default true.\", \"default\": true}, \"label_selector\": {\"type\": \"string\", \"description\": \"Label selector to filter pods.\"}}, \"required\": []}}, {\"name\": \"resources_create_or_update\", \"description\": \"Create or update a Kubernetes resource from YAML or JSON.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"resource\": {\"type\": \"string\", \"description\": \"A JSON or YAML representation of the Kubernetes resource (apiVersion, kind, metadata, spec).\"}}, \"required\": [\"resource\"]}}, {\"name\": \"resources_delete\", \"description\": \"Delete a Kubernetes resource by apiVersion, kind, and name.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"apiVersion\": {\"type\": \"string\", \"description\": \"apiVersion of the resource (e.g. v1, apps/v1).\"}, \"kind\": {\"type\": \"string\", \"description\": \"Kind of the resource (e.g. Pod, Deployment).\"}, \"name\": {\"type\": \"string\", \"description\": \"Name of the resource.\"}, \"namespace\": {\"type\": \"string\", \"description\": \"Namespace (optional, for namespaced resources).\"}}, \"required\": [\"apiVersion\", \"kind\", \"name\"]}}, {\"name\": \"resources_get\", \"description\": \"Get details of a specific Kubernetes resource by apiVersion, kind, and name.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"apiVersion\": {\"type\": \"string\", \"description\": \"apiVersion of the resource (e.g. v1, apps/v1).\"}, \"kind\": {\"type\": \"string\", \"description\": \"Kind of the resource (e.g. Pod, Deployment).\"}, \"name\": {\"type\": \"string\", \"description\": \"Name of the resource.\"}, \"namespace\": {\"type\": \"string\", \"description\": \"Namespace (optional, for namespaced resources).\"}}, \"required\": [\"apiVersion\", \"kind\", \"name\"]}}, {\"name\": \"resources_list\", \"description\": \"List Kubernetes resources by apiVersion and kind.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"apiVersion\": {\"type\": \"string\", \"description\": \"apiVersion of the resources (e.g. v1, apps/v1).\"}, \"kind\": {\"type\": \"string\", \"description\": \"Kind of the resources (e.g. Pod, Deployment).\"}, \"namespace\": {\"type\": \"string\", \"description\": \"Namespace (optional, all namespaces if not provided).\"}, \"labelSelector\": {\"type\": \"string\", \"description\": \"Label selector to filter resources.\"}, \"fieldSelector\": {\"type\": \"string\", \"description\": \"Field selector to filter resources.\"}}, \"required\": [\"apiVersion\", \"kind\"]}}, {\"name\": \"resources_scale\", \"description\": \"Get or update the scale of a Kubernetes resource. If scale is provided, updates it. Always returns current scale.\", \"inputSchema\": {\"type\": \"object\", \"properties\": {\"apiVersion\": {\"type\": \"string\", \"description\": \"apiVersion of the resource (e.g. apps/v1).\"}, \"kind\": {\"type\": \"string\", \"description\": \"Kind of the resource (e.g. Deployment, StatefulSet).\"}, \"name\": {\"type\": \"string\", \"description\": \"Name of the resource.\"}, \"namespace\": {\"type\": \"string\", \"description\": \"Namespace (optional).\"}, \"scale\": {\"type\": \"integer\", \"description\": \"New scale value. If not provided, returns current scale without updating.\"}}, \"required\": [\"apiVersion\", \"kind\", \"name\"]}}]}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-01-namespaces_list",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "namespaces_list"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"namespaces\\\": [\\n    {\\n      \\\"name\\\": \\\"default\\\",\\n      \\\"status\\\": \\\"Active\\\",\\n      \\\"labels\\\": {}\\n    },\\n    {\\n      \\\"name\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Active\\\",\\n      \\\"labels\\\": {\\n        \\\"app\\\": \\\"myapp\\\",\\n        \\\"env\\\": \\\"production\\\"\\n      }\\n    },\\n    {\\n      \\\"name\\\": \\\"openshift-monitoring\\\",\\n      \\\"status\\\": \\\"Active\\\",\\n      \\\"labels\\\": {}\\n    },\\n    {\\n      \\\"name\\\": \\\"openshift-ingress\\\",\\n      \\\"status\\\": \\\"Active\\\",\\n      \\\"labels\\\": {}\\n    },\\n    {\\n      \\\"name\\\": \\\"kube-system\\\",\\n      \\\"status\\\": \\\"Active\\\",\\n      \\\"labels\\\": {}\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    },
+    "times": {
+      "remainingTimes": 1,
+      "unlimited": false
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-02-pods_list_in_namespace",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_list_in_namespace",
+            "arguments": {
+              "namespace": "myapp"
+            }
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"pods\\\": [\\n    {\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-x2k1p\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"CrashLoopBackOff\\\",\\n      \\\"ready\\\": \\\"0/1\\\",\\n      \\\"restarts\\\": 5,\\n      \\\"node\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"2h\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-m9n3q\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-1.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"5d\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"web-frontend-5b9c7d8e4f-abc12\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-1.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"5d\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"db-postgresql-0\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"30d\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    },
+    "times": {
+      "remainingTimes": 1,
+      "unlimited": false
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-03-pods_get",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_get",
+            "arguments": {
+              "name": "api-server-7d4b8c6f9-x2k1p",
+              "namespace": "myapp"
+            }
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"name\\\": \\\"api-server-7d4b8c6f9-x2k1p\\\",\\n  \\\"namespace\\\": \\\"myapp\\\",\\n  \\\"status\\\": \\\"CrashLoopBackOff\\\",\\n  \\\"node\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n  \\\"ip\\\": \\\"10.128.2.45\\\",\\n  \\\"containers\\\": [\\n    {\\n      \\\"name\\\": \\\"api-server\\\",\\n      \\\"image\\\": \\\"registry.example.com/myapp/api-server:v2.3.1\\\",\\n      \\\"ready\\\": false,\\n      \\\"restart_count\\\": 5,\\n      \\\"state\\\": \\\"waiting\\\",\\n      \\\"last_termination_reason\\\": \\\"OOMKilled\\\"\\n    }\\n  ],\\n  \\\"labels\\\": {\\n    \\\"app\\\": \\\"api-server\\\",\\n    \\\"version\\\": \\\"v2.3.1\\\",\\n    \\\"pod-template-hash\\\": \\\"7d4b8c6f9\\\"\\n  },\\n  \\\"created_at\\\": \\\"2026-09-07T08:00:00Z\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-04-pods_log",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_log",
+            "arguments": {
+              "name": "api-server-7d4b8c6f9-x2k1p",
+              "namespace": "myapp",
+              "previous": true
+            }
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"pod\\\": \\\"api-server-7d4b8c6f9-x2k1p\\\",\\n  \\\"container\\\": \\\"api-server\\\",\\n  \\\"logs\\\": \\\"2026-09-07T10:12:00Z INFO  Starting api-server v2.3.1\\\\n2026-09-07T10:12:01Z INFO  Connected to database at db-postgresql-0.myapp.svc:5432\\\\n2026-09-07T10:12:02Z INFO  Loading product catalog into memory cache...\\\\n2026-09-07T10:13:30Z WARN  Memory usage at 450Mi, approaching limit of 512Mi\\\\n2026-09-07T10:14:15Z WARN  Memory usage at 498Mi, limit is 512Mi\\\\n2026-09-07T10:14:58Z ERROR Failed to allocate memory for cache expansion\\\\n2026-09-07T10:14:58Z FATAL Process killed: OOMKilled\\\\n\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-05-pods_log",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_log",
+            "arguments": {
+              "name": "api-server-7d4b8c6f9-x2k1p",
+              "namespace": "myapp"
+            }
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"pod\\\": \\\"api-server-7d4b8c6f9-x2k1p\\\",\\n  \\\"container\\\": \\\"api-server\\\",\\n  \\\"logs\\\": \\\"2026-09-07T10:15:05Z INFO  Starting api-server v2.3.1\\\\n2026-09-07T10:15:06Z INFO  Connected to database at db-postgresql-0.myapp.svc:5432\\\\n2026-09-07T10:15:07Z INFO  Loading product catalog into memory cache...\\\\n\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-06-events_list",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "events_list",
+            "arguments": {
+              "namespace": "myapp"
+            }
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"events\\\": [\\n    {\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-x2k1p.oom1\\\",\\n      \\\"type\\\": \\\"Warning\\\",\\n      \\\"reason\\\": \\\"OOMKilling\\\",\\n      \\\"message\\\": \\\"Memory cgroup out of memory: Killed process 45678 (api-server) total-vm:620480kB, anon-rss:524288kB\\\",\\n      \\\"object\\\": \\\"Pod/api-server-7d4b8c6f9-x2k1p\\\",\\n      \\\"last_seen\\\": \\\"2026-09-07T10:14:58Z\\\"\\n    },\\n    {\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-x2k1p.backoff1\\\",\\n      \\\"type\\\": \\\"Warning\\\",\\n      \\\"reason\\\": \\\"BackOff\\\",\\n      \\\"message\\\": \\\"Back-off restarting failed container api-server in pod api-server-7d4b8c6f9-x2k1p_myapp\\\",\\n      \\\"object\\\": \\\"Pod/api-server-7d4b8c6f9-x2k1p\\\",\\n      \\\"last_seen\\\": \\\"2026-09-07T10:15:30Z\\\"\\n    },\\n    {\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-x2k1p.pulled1\\\",\\n      \\\"type\\\": \\\"Normal\\\",\\n      \\\"reason\\\": \\\"Pulled\\\",\\n      \\\"message\\\": \\\"Container image \\\\\\\"registry.example.com/myapp/api-server:v2.3.1\\\\\\\" already present on machine\\\",\\n      \\\"object\\\": \\\"Pod/api-server-7d4b8c6f9-x2k1p\\\",\\n      \\\"last_seen\\\": \\\"2026-09-07T10:15:02Z\\\"\\n    },\\n    {\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"name\\\": \\\"web-frontend-5b9c7d8e4f-abc12.healthy\\\",\\n      \\\"type\\\": \\\"Normal\\\",\\n      \\\"reason\\\": \\\"Pulled\\\",\\n      \\\"message\\\": \\\"Container image already present on machine\\\",\\n      \\\"object\\\": \\\"Pod/web-frontend-5b9c7d8e4f-abc12\\\",\\n      \\\"last_seen\\\": \\\"2026-09-02T08:00:00Z\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-07-nodes_top",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "nodes_top"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"nodes\\\": [\\n    {\\n      \\\"name\\\": \\\"master-0.ocp-lab.example.com\\\",\\n      \\\"cpu_usage\\\": \\\"850m\\\",\\n      \\\"cpu_percent\\\": \\\"21%\\\",\\n      \\\"memory_usage\\\": \\\"6144Mi\\\",\\n      \\\"memory_percent\\\": \\\"48%\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n      \\\"cpu_usage\\\": \\\"2100m\\\",\\n      \\\"cpu_percent\\\": \\\"52%\\\",\\n      \\\"memory_usage\\\": \\\"24Gi\\\",\\n      \\\"memory_percent\\\": \\\"75%\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"worker-1.ocp-lab.example.com\\\",\\n      \\\"cpu_usage\\\": \\\"1400m\\\",\\n      \\\"cpu_percent\\\": \\\"35%\\\",\\n      \\\"memory_usage\\\": \\\"18Gi\\\",\\n      \\\"memory_percent\\\": \\\"56%\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    },
+    "times": {
+      "remainingTimes": 1,
+      "unlimited": false
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-08-pods_top",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_top",
+            "arguments": {
+              "namespace": "myapp"
+            }
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"pods\\\": [\\n    {\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-x2k1p\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"cpu_usage\\\": \\\"480m\\\",\\n      \\\"memory_usage\\\": \\\"498Mi\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-m9n3q\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"cpu_usage\\\": \\\"350m\\\",\\n      \\\"memory_usage\\\": \\\"420Mi\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"web-frontend-5b9c7d8e4f-abc12\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"cpu_usage\\\": \\\"120m\\\",\\n      \\\"memory_usage\\\": \\\"256Mi\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"db-postgresql-0\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"cpu_usage\\\": \\\"200m\\\",\\n      \\\"memory_usage\\\": \\\"1Gi\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-09-resources_get",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "resources_get",
+            "arguments": {
+              "apiVersion": "apps/v1",
+              "kind": "Deployment",
+              "name": "api-server",
+              "namespace": "myapp"
+            }
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"apiVersion\\\": \\\"apps/v1\\\",\\n  \\\"kind\\\": \\\"Deployment\\\",\\n  \\\"metadata\\\": {\\n    \\\"name\\\": \\\"api-server\\\",\\n    \\\"namespace\\\": \\\"myapp\\\",\\n    \\\"labels\\\": {\\n      \\\"app\\\": \\\"api-server\\\"\\n    },\\n    \\\"resourceVersion\\\": \\\"184501\\\"\\n  },\\n  \\\"spec\\\": {\\n    \\\"replicas\\\": 2,\\n    \\\"selector\\\": {\\n      \\\"matchLabels\\\": {\\n        \\\"app\\\": \\\"api-server\\\"\\n      }\\n    },\\n    \\\"template\\\": {\\n      \\\"metadata\\\": {\\n        \\\"labels\\\": {\\n          \\\"app\\\": \\\"api-server\\\",\\n          \\\"version\\\": \\\"v2.3.1\\\"\\n        }\\n      },\\n      \\\"spec\\\": {\\n        \\\"containers\\\": [\\n          {\\n            \\\"name\\\": \\\"api-server\\\",\\n            \\\"image\\\": \\\"registry.example.com/myapp/api-server:v2.3.1\\\",\\n            \\\"ports\\\": [\\n              {\\n                \\\"containerPort\\\": 8080\\n              }\\n            ],\\n            \\\"resources\\\": {\\n              \\\"limits\\\": {\\n                \\\"memory\\\": \\\"512Mi\\\",\\n                \\\"cpu\\\": \\\"500m\\\"\\n              },\\n              \\\"requests\\\": {\\n                \\\"memory\\\": \\\"256Mi\\\",\\n                \\\"cpu\\\": \\\"250m\\\"\\n              }\\n            },\\n            \\\"env\\\": [\\n              {\\n                \\\"name\\\": \\\"DB_HOST\\\",\\n                \\\"value\\\": \\\"db-postgresql-0.myapp.svc\\\"\\n              },\\n              {\\n                \\\"name\\\": \\\"CACHE_ENABLED\\\",\\n                \\\"value\\\": \\\"true\\\"\\n              }\\n            ]\\n          }\\n        ]\\n      }\\n    }\\n  },\\n  \\\"status\\\": {\\n    \\\"replicas\\\": 2,\\n    \\\"readyReplicas\\\": 1,\\n    \\\"availableReplicas\\\": 1,\\n    \\\"unavailableReplicas\\\": 1\\n  }\\n}\"}], \"isError\": false}}}"
+    },
+    "times": {
+      "remainingTimes": 1,
+      "unlimited": false
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-10-resources_create_or_update",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "resources_create_or_update",
+            "arguments": {
+              "resource": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: api-server\n  namespace: myapp\nspec:\n  template:\n    spec:\n      containers:\n      - name: api-server\n        resources:\n          limits:\n            memory: 1Gi\n            cpu: 500m\n          requests:\n            memory: 512Mi\n            cpu: 250m\n"
+            }
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"kind\\\": \\\"Deployment\\\",\\n  \\\"name\\\": \\\"api-server\\\",\\n  \\\"namespace\\\": \\\"myapp\\\",\\n  \\\"action\\\": \\\"configured\\\",\\n  \\\"resource_version\\\": \\\"184729\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-11-pods_list_in_namespace",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_list_in_namespace",
+            "arguments": {
+              "namespace": "myapp"
+            }
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"pods\\\": [\\n    {\\n      \\\"name\\\": \\\"api-server-8e5c9d7f0-r4t2w\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"30s\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"api-server-8e5c9d7f0-k7p5n\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-1.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"25s\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"web-frontend-5b9c7d8e4f-abc12\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-1.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"5d\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"db-postgresql-0\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"30d\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    },
+    "times": {
+      "remainingTimes": 1,
+      "unlimited": false
+    }
+  },
+  {
+    "id": "mcp-openshift-fixture-fixtures-oomkilled-12-resources_get",
+    "priority": 50,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "resources_get",
+            "arguments": {
+              "apiVersion": "apps/v1",
+              "kind": "Deployment",
+              "name": "api-server",
+              "namespace": "myapp"
+            }
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"apiVersion\\\": \\\"apps/v1\\\",\\n  \\\"kind\\\": \\\"Deployment\\\",\\n  \\\"metadata\\\": {\\n    \\\"name\\\": \\\"api-server\\\",\\n    \\\"namespace\\\": \\\"myapp\\\",\\n    \\\"labels\\\": {\\n      \\\"app\\\": \\\"api-server\\\"\\n    },\\n    \\\"resourceVersion\\\": \\\"184729\\\"\\n  },\\n  \\\"spec\\\": {\\n    \\\"replicas\\\": 2,\\n    \\\"selector\\\": {\\n      \\\"matchLabels\\\": {\\n        \\\"app\\\": \\\"api-server\\\"\\n      }\\n    },\\n    \\\"template\\\": {\\n      \\\"metadata\\\": {\\n        \\\"labels\\\": {\\n          \\\"app\\\": \\\"api-server\\\",\\n          \\\"version\\\": \\\"v2.3.1\\\"\\n        }\\n      },\\n      \\\"spec\\\": {\\n        \\\"containers\\\": [\\n          {\\n            \\\"name\\\": \\\"api-server\\\",\\n            \\\"image\\\": \\\"registry.example.com/myapp/api-server:v2.3.1\\\",\\n            \\\"ports\\\": [\\n              {\\n                \\\"containerPort\\\": 8080\\n              }\\n            ],\\n            \\\"resources\\\": {\\n              \\\"limits\\\": {\\n                \\\"memory\\\": \\\"1Gi\\\",\\n                \\\"cpu\\\": \\\"500m\\\"\\n              },\\n              \\\"requests\\\": {\\n                \\\"memory\\\": \\\"512Mi\\\",\\n                \\\"cpu\\\": \\\"250m\\\"\\n              }\\n            },\\n            \\\"env\\\": [\\n              {\\n                \\\"name\\\": \\\"DB_HOST\\\",\\n                \\\"value\\\": \\\"db-postgresql-0.myapp.svc\\\"\\n              },\\n              {\\n                \\\"name\\\": \\\"CACHE_ENABLED\\\",\\n                \\\"value\\\": \\\"true\\\"\\n              }\\n            ]\\n          }\\n        ]\\n      }\\n    }\\n  },\\n  \\\"status\\\": {\\n    \\\"replicas\\\": 2,\\n    \\\"readyReplicas\\\": 2,\\n    \\\"availableReplicas\\\": 2,\\n    \\\"unavailableReplicas\\\": 0\\n  }\\n}\"}], \"isError\": false}}}"
+    },
+    "times": {
+      "remainingTimes": 1,
+      "unlimited": false
+    }
+  },
+  {
+    "id": "mcp-openshift-static-configuration_contexts_list",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "configuration_contexts_list"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"contexts\\\": [\\n    {\\n      \\\"name\\\": \\\"default/api-ocp-lab-example-com:6443/admin\\\",\\n      \\\"cluster\\\": \\\"api-ocp-lab-example-com:6443\\\",\\n      \\\"user\\\": \\\"admin\\\",\\n      \\\"server\\\": \\\"https://api.ocp-lab.example.com:6443\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"staging/api-ocp-staging-example-com:6443/developer\\\",\\n      \\\"cluster\\\": \\\"api-ocp-staging-example-com:6443\\\",\\n      \\\"user\\\": \\\"developer\\\",\\n      \\\"server\\\": \\\"https://api.ocp-staging.example.com:6443\\\"\\n    }\\n  ],\\n  \\\"current_context\\\": \\\"default/api-ocp-lab-example-com:6443/admin\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-configuration_view",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "configuration_view"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"kubeconfig\\\": \\\"apiVersion: v1\\\\nclusters:\\\\n- cluster:\\\\n    server: https://api.ocp-lab.example.com:6443\\\\n  name: api-ocp-lab-example-com:6443\\\\ncontexts:\\\\n- context:\\\\n    cluster: api-ocp-lab-example-com:6443\\\\n    namespace: default\\\\n    user: admin\\\\n  name: default/api-ocp-lab-example-com:6443/admin\\\\ncurrent-context: default/api-ocp-lab-example-com:6443/admin\\\\nkind: Config\\\\n\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-events_list",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "events_list"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"events\\\": [\\n    {\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-x2k1p.event1\\\",\\n      \\\"type\\\": \\\"Normal\\\",\\n      \\\"reason\\\": \\\"Pulled\\\",\\n      \\\"message\\\": \\\"Successfully pulled image\\\",\\n      \\\"object\\\": \\\"Pod/api-server-7d4b8c6f9-x2k1p\\\",\\n      \\\"last_seen\\\": \\\"2026-09-07T09:00:00Z\\\"\\n    },\\n    {\\n      \\\"namespace\\\": \\\"openshift-monitoring\\\",\\n      \\\"name\\\": \\\"prometheus-k8s-0.event1\\\",\\n      \\\"type\\\": \\\"Normal\\\",\\n      \\\"reason\\\": \\\"Started\\\",\\n      \\\"message\\\": \\\"Started container prometheus\\\",\\n      \\\"object\\\": \\\"Pod/prometheus-k8s-0\\\",\\n      \\\"last_seen\\\": \\\"2026-09-07T09:00:00Z\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-namespaces_list",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "namespaces_list"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"namespaces\\\": [\\n    {\\n      \\\"name\\\": \\\"default\\\",\\n      \\\"status\\\": \\\"Active\\\",\\n      \\\"labels\\\": {}\\n    },\\n    {\\n      \\\"name\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Active\\\",\\n      \\\"labels\\\": {\\n        \\\"app\\\": \\\"myapp\\\",\\n        \\\"env\\\": \\\"production\\\"\\n      }\\n    },\\n    {\\n      \\\"name\\\": \\\"openshift-monitoring\\\",\\n      \\\"status\\\": \\\"Active\\\",\\n      \\\"labels\\\": {}\\n    },\\n    {\\n      \\\"name\\\": \\\"openshift-ingress\\\",\\n      \\\"status\\\": \\\"Active\\\",\\n      \\\"labels\\\": {}\\n    },\\n    {\\n      \\\"name\\\": \\\"kube-system\\\",\\n      \\\"status\\\": \\\"Active\\\",\\n      \\\"labels\\\": {}\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-dynamic-nodes_log",
+    "priority": 40,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "nodes_log"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"node\\\": \\\"{{#jsonPath}}$.params.arguments.name{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"query\\\": \\\"{{#jsonPath}}$.params.arguments.query{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"logs\\\": \\\"Sep 07 09:00:01 kubelet[1523]: I0907 09:00:01.123456 1523 kubelet.go:2345] SyncLoop (PLEG): pod in running state\\\\n\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-dynamic-nodes_stats_summary",
+    "priority": 40,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "nodes_stats_summary"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"node_name\\\": \\\"{{#jsonPath}}$.params.arguments.name{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"cpu\\\": {\\n    \\\"usage_nano_cores\\\": 1250000000,\\n    \\\"usage_core_nano_seconds\\\": 45678901234567\\n  },\\n  \\\"memory\\\": {\\n    \\\"available_bytes\\\": 8589934592,\\n    \\\"usage_bytes\\\": 25769803776,\\n    \\\"working_set_bytes\\\": 24696061952\\n  },\\n  \\\"fs\\\": {\\n    \\\"available_bytes\\\": 107374182400,\\n    \\\"capacity_bytes\\\": 214748364800,\\n    \\\"used_bytes\\\": 96636764160\\n  },\\n  \\\"pods_count\\\": 42\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-nodes_top",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "nodes_top"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"nodes\\\": [\\n    {\\n      \\\"name\\\": \\\"master-0.ocp-lab.example.com\\\",\\n      \\\"cpu_usage\\\": \\\"850m\\\",\\n      \\\"cpu_percent\\\": \\\"21%\\\",\\n      \\\"memory_usage\\\": \\\"6144Mi\\\",\\n      \\\"memory_percent\\\": \\\"48%\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n      \\\"cpu_usage\\\": \\\"1600m\\\",\\n      \\\"cpu_percent\\\": \\\"40%\\\",\\n      \\\"memory_usage\\\": \\\"16Gi\\\",\\n      \\\"memory_percent\\\": \\\"50%\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"worker-1.ocp-lab.example.com\\\",\\n      \\\"cpu_usage\\\": \\\"1400m\\\",\\n      \\\"cpu_percent\\\": \\\"35%\\\",\\n      \\\"memory_usage\\\": \\\"14Gi\\\",\\n      \\\"memory_percent\\\": \\\"44%\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-dynamic-pods_delete",
+    "priority": 40,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_delete"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"name\\\": \\\"{{#jsonPath}}$.params.arguments.name{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"namespace\\\": \\\"{{#jsonPath}}$.params.arguments.namespace{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"status\\\": \\\"deleted\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-pods_exec",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_exec"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"stdout\\\": \\\"total 24\\\\ndrwxr-xr-x 2 root root 4096 Sep  7 08:00 bin\\\\ndrwxr-xr-x 2 root root 4096 Sep  7 08:00 etc\\\\n\\\",\\n  \\\"stderr\\\": \\\"\\\",\\n  \\\"exit_code\\\": 0\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-dynamic-pods_get",
+    "priority": 40,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_get"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"name\\\": \\\"{{#jsonPath}}$.params.arguments.name{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"namespace\\\": \\\"{{#jsonPath}}$.params.arguments.namespace{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"status\\\": \\\"Running\\\",\\n  \\\"node\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n  \\\"ip\\\": \\\"10.128.2.45\\\",\\n  \\\"containers\\\": [\\n    {\\n      \\\"name\\\": \\\"api-server\\\",\\n      \\\"image\\\": \\\"registry.example.com/myapp/api-server:v2.3.1\\\",\\n      \\\"ready\\\": true,\\n      \\\"restart_count\\\": 0,\\n      \\\"state\\\": \\\"running\\\",\\n      \\\"last_termination_reason\\\": \\\"\\\"\\n    }\\n  ],\\n  \\\"labels\\\": {\\n    \\\"app\\\": \\\"api-server\\\",\\n    \\\"version\\\": \\\"v2.3.1\\\"\\n  },\\n  \\\"created_at\\\": \\\"2026-09-07T08:00:00Z\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-pods_list",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_list"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"pods\\\": [\\n    {\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-x2k1p\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"5d\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"web-frontend-5b9c7d8e4f-abc12\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-1.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"5d\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"prometheus-k8s-0\\\",\\n      \\\"namespace\\\": \\\"openshift-monitoring\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"3/3\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"30d\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-pods_list_in_namespace",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_list_in_namespace"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"pods\\\": [\\n    {\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-x2k1p\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"5d\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-m9n3q\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-1.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"5d\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"web-frontend-5b9c7d8e4f-abc12\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-1.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"5d\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"db-postgresql-0\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"status\\\": \\\"Running\\\",\\n      \\\"ready\\\": \\\"1/1\\\",\\n      \\\"restarts\\\": 0,\\n      \\\"node\\\": \\\"worker-0.ocp-lab.example.com\\\",\\n      \\\"age\\\": \\\"30d\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-dynamic-pods_log",
+    "priority": 40,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_log"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"pod\\\": \\\"{{#jsonPath}}$.params.arguments.name{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"container\\\": \\\"api-server\\\",\\n  \\\"logs\\\": \\\"2026-09-07T10:14:55Z INFO  Starting api-server v2.3.1\\\\n2026-09-07T10:14:56Z INFO  Connected to database\\\\n2026-09-07T10:14:57Z INFO  Listening on :8080\\\\n\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-dynamic-pods_run",
+    "priority": 40,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_run"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"name\\\": \\\"{{#jsonPath}}$.params.arguments.name{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"namespace\\\": \\\"{{#jsonPath}}$.params.arguments.namespace{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"image\\\": \\\"{{#jsonPath}}$.params.arguments.image{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"status\\\": \\\"Pending\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-pods_top",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "pods_top"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"pods\\\": [\\n    {\\n      \\\"name\\\": \\\"api-server-7d4b8c6f9-x2k1p\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"cpu_usage\\\": \\\"180m\\\",\\n      \\\"memory_usage\\\": \\\"220Mi\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"web-frontend-5b9c7d8e4f-abc12\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"cpu_usage\\\": \\\"80m\\\",\\n      \\\"memory_usage\\\": \\\"128Mi\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"db-postgresql-0\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"cpu_usage\\\": \\\"150m\\\",\\n      \\\"memory_usage\\\": \\\"768Mi\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-resources_create_or_update",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "resources_create_or_update"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"kind\\\": \\\"Deployment\\\",\\n  \\\"name\\\": \\\"api-server\\\",\\n  \\\"namespace\\\": \\\"myapp\\\",\\n  \\\"action\\\": \\\"configured\\\",\\n  \\\"resource_version\\\": \\\"184729\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-dynamic-resources_delete",
+    "priority": 40,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "resources_delete"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"kind\\\": \\\"{{#jsonPath}}$.params.arguments.kind{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"name\\\": \\\"{{#jsonPath}}$.params.arguments.name{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"namespace\\\": \\\"{{#jsonPath}}$.params.arguments.namespace{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"status\\\": \\\"deleted\\\"\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-resources_get",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "resources_get"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"apiVersion\\\": \\\"apps/v1\\\",\\n  \\\"kind\\\": \\\"Deployment\\\",\\n  \\\"metadata\\\": {\\n    \\\"name\\\": \\\"api-server\\\",\\n    \\\"namespace\\\": \\\"myapp\\\",\\n    \\\"labels\\\": {\\n      \\\"app\\\": \\\"api-server\\\"\\n    }\\n  },\\n  \\\"spec\\\": {\\n    \\\"replicas\\\": 2,\\n    \\\"selector\\\": {\\n      \\\"matchLabels\\\": {\\n        \\\"app\\\": \\\"api-server\\\"\\n      }\\n    },\\n    \\\"template\\\": {\\n      \\\"spec\\\": {\\n        \\\"containers\\\": [\\n          {\\n            \\\"name\\\": \\\"api-server\\\",\\n            \\\"image\\\": \\\"registry.example.com/myapp/api-server:v2.3.1\\\",\\n            \\\"resources\\\": {\\n              \\\"limits\\\": {\\n                \\\"memory\\\": \\\"1Gi\\\",\\n                \\\"cpu\\\": \\\"500m\\\"\\n              },\\n              \\\"requests\\\": {\\n                \\\"memory\\\": \\\"256Mi\\\",\\n                \\\"cpu\\\": \\\"250m\\\"\\n              }\\n            }\\n          }\\n        ]\\n      }\\n    }\\n  },\\n  \\\"status\\\": {\\n    \\\"replicas\\\": 2,\\n    \\\"readyReplicas\\\": 2,\\n    \\\"availableReplicas\\\": 2,\\n    \\\"conditions\\\": [\\n      {\\n        \\\"type\\\": \\\"Available\\\",\\n        \\\"status\\\": \\\"True\\\"\\n      }\\n    ]\\n  }\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-static-resources_list",
+    "priority": 30,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "resources_list"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"items\\\": [\\n    {\\n      \\\"name\\\": \\\"api-server\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"kind\\\": \\\"Deployment\\\",\\n      \\\"status\\\": \\\"2/2\\\",\\n      \\\"age\\\": \\\"5d\\\"\\n    },\\n    {\\n      \\\"name\\\": \\\"web-frontend\\\",\\n      \\\"namespace\\\": \\\"myapp\\\",\\n      \\\"kind\\\": \\\"Deployment\\\",\\n      \\\"status\\\": \\\"1/1\\\",\\n      \\\"age\\\": \\\"30d\\\"\\n    }\\n  ]\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-dynamic-resources_scale",
+    "priority": 40,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call",
+          "params": {
+            "name": "resources_scale"
+          }
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"kind\\\": \\\"{{#jsonPath}}$.params.arguments.kind{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"name\\\": \\\"{{#jsonPath}}$.params.arguments.name{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"namespace\\\": \\\"{{#jsonPath}}$.params.arguments.namespace{{/jsonPath}}{{jsonPathResult}}\\\",\\n  \\\"current_replicas\\\": 2,\\n  \\\"desired_replicas\\\": 2\\n}\"}], \"isError\": false}}}"
+    }
+  },
+  {
+    "id": "mcp-openshift-catchall-tools-call",
+    "priority": 0,
+    "httpRequest": {
+      "method": "POST",
+      "path": "/mcp/openshift",
+      "body": {
+        "type": "JSON",
+        "json": {
+          "jsonrpc": "2.0",
+          "method": "tools/call"
+        },
+        "matchType": "ONLY_MATCHING_FIELDS"
+      }
+    },
+    "httpResponseTemplate": {
+      "templateType": "MUSTACHE",
+      "template": "{\"statusCode\": 200, \"headers\": {\"Content-Type\": [\"application/json\"]}, \"body\": {\"jsonrpc\": \"2.0\", \"id\": {{#jsonPath}}$.id{{/jsonPath}}{{jsonPathResult}}, \"result\": {\"content\": [{\"type\": \"text\", \"text\": \"{\\n  \\\"error\\\": \\\"Unknown tool\\\",\\n  \\\"hint\\\": \\\"Call tools/list on /mcp/openshift\\\"\\n}\"}], \"isError\": true}}}"
+    }
+  }
+]
